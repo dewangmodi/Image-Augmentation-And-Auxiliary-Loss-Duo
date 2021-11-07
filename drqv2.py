@@ -150,7 +150,7 @@ class DrQV2Agent:
         self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
 
         # data augmentation
-        self.aug = RandomShiftsAug(pad=4)
+        # self.aug = RandomShiftsAug(pad=4)
 
         self.train()
         self.critic_target.train()
@@ -238,8 +238,8 @@ class DrQV2Agent:
             batch, self.device)
 
         # augment
-        obs = self.aug(obs.float())
-        next_obs = self.aug(next_obs.float())
+        # obs = self.aug(obs.float())
+        # next_obs = self.aug(next_obs.float())
         # encode
         obs = self.encoder(obs)
         with torch.no_grad():
