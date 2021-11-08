@@ -176,7 +176,7 @@ class DrQV2Agent:
         self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=lr)
 
         # data augmentation
-        self.aug = RandomShiftsAug(pad=4)
+        # self.aug = RandomShiftsAug(pad=4)
 
         self.train()
         self.critic_target.train()
@@ -290,8 +290,8 @@ class DrQV2Agent:
 
         # augment
         ### uncomment 
-        obs = self.aug(obs.float())
-        next_obs = self.aug(next_obs.float())
+        # obs = self.aug(obs.float())
+        # next_obs = self.aug(next_obs.float())
 
         # encode
         obs_transformed = self.encoder(obs)
