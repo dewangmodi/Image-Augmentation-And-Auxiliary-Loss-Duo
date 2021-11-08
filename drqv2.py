@@ -11,7 +11,7 @@ import torch.nn.functional as F
 import utils
 
 
-AUG = True
+AUG = False
 DEC = True
 
 class RandomShiftsAug(nn.Module):
@@ -262,7 +262,7 @@ class DrQV2Agent:
         h = self.encoder(obs)
         h_rev = self.decoder(h)
         latent_loss = (0.5 * h.pow(2).sum(1)).mean()
-        loss = F.mse_loss(h,hrev) + 10e-6 * latent_loss
+        loss = F.mse_loss(h,h_rev) + 10e-6 * latent_loss
         self.encoder_opt.zero_grad()
         self.decoder_opt.zero_grad()
         loss.backward()
