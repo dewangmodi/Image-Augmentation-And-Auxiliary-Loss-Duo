@@ -292,7 +292,7 @@ class DrQV2Agent:
             next_obs = self.aug(next_obs.float())
 
         # encode
-        obs = self.encoder(obs)
+        obs_transformed = self.encoder(obs)
         with torch.no_grad():
             next_obs = self.encoder(next_obs)
 
@@ -301,10 +301,10 @@ class DrQV2Agent:
 
         # update critic
         metrics.update(
-            self.update_critic(obs, action, reward, discount, next_obs, step))
+            self.update_critic(obs_transformed, action, reward, discount, next_obs, step))
 
         # update actor
-        metrics.update(self.update_actor(obs.detach(), step))
+        metrics.update(self.update_actor(obs_transformed.detach(), step))
 
         # update critic target
         utils.soft_update_params(self.critic, self.critic_target,
