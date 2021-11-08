@@ -79,8 +79,8 @@ class Decoder(nn.Module):
         self.deconvnet = nn.Sequential(nn.ConvTranspose2d(32, 32, 3, stride=1),
                                      nn.ReLU(), nn.ConvTranspose2d(32, 32, 3, stride=1),
                                      nn.ReLU(), nn.ConvTranspose2d(32, 32, 3, stride=1),
-                                     nn.ReLU(), nn.ConvTranspose2d(32, obs_shape[0], 3, stride=2),
-                                     nn.ReLU())
+                                     nn.ReLU(), nn.ConvTranspose2d(32, obs_shape[0], 3, stride=2,output_padding=1)
+                                     )
 
         self.apply(utils.weight_init)
 
