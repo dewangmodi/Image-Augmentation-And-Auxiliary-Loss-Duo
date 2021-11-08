@@ -12,7 +12,7 @@ import utils
 
 
 AUG = True
-DEC = True
+DEC = False
 
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
@@ -158,7 +158,8 @@ class DrQV2Agent:
 
         # models
         self.encoder = Encoder(obs_shape).to(device)
-        self.decoder = Decoder(obs_shape).to(device)
+        if DEC:
+            self.decoder = Decoder(obs_shape).to(device)
         self.actor = Actor(self.encoder.repr_dim, action_shape, feature_dim,
                            hidden_dim).to(device)
 
@@ -172,7 +173,8 @@ class DrQV2Agent:
         self.encoder_opt = torch.optim.Adam(self.encoder.parameters(), lr=lr)
         self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=lr)
         self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
-        self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=lr)
+        if DEC:
+            self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=lr)
 
         # data augmentation
         self.aug = RandomShiftsAug(pad=4)
@@ -185,7 +187,8 @@ class DrQV2Agent:
         self.encoder.train(training)
         self.actor.train(training)
         self.critic.train(training)
-        self.decoder.train(training)
+        if DEC:
+            self.decoder.train(training)
 
     def act(self, obs, step, eval_mode):
         obs = torch.as_tensor(obs, device=self.device)
