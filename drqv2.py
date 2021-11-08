@@ -11,6 +11,9 @@ import torch.nn.functional as F
 import utils
 
 
+AUG = True
+DEC = True
+
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
         super().__init__()
@@ -65,6 +68,26 @@ class Encoder(nn.Module):
         h = self.convnet(obs)
         h = h.view(h.shape[0], -1)
         return h
+
+
+class Decoder(nn.Module):
+    def __init__(self, obs_shape):
+        super().__init__()
+
+        assert len(obs_shape) == 3
+
+        self.deconvnet = nn.Sequential(nn.ConvTranspose2d(32, 32, 3, stride=1),
+                                     nn.ReLU(), nn.ConvTranspose2d(32, 32, 3, stride=1),
+                                     nn.ReLU(), nn.ConvTranspose2d(32, 32, 3, stride=1),
+                                     nn.ReLU(), nn.ConvTranspose2d(32, obs_shape[0], 3, stride=2),
+                                     nn.ReLU())
+
+        self.apply(utils.weight_init)
+
+    def forward(self, obs):
+        h = self.deconvnet(obs.reshape(obs.shape[0],32,35,35))
+        return h
+
 
 
 class Actor(nn.Module):
@@ -135,6 +158,7 @@ class DrQV2Agent:
 
         # models
         self.encoder = Encoder(obs_shape).to(device)
+        self.decoder = Decoder(obs_shape).to(device)
         self.actor = Actor(self.encoder.repr_dim, action_shape, feature_dim,
                            hidden_dim).to(device)
 
@@ -148,9 +172,10 @@ class DrQV2Agent:
         self.encoder_opt = torch.optim.Adam(self.encoder.parameters(), lr=lr)
         self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=lr)
         self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
+        self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=lr)
 
         # data augmentation
-        # self.aug = RandomShiftsAug(pad=4)
+        self.aug = RandomShiftsAug(pad=4)
 
         self.train()
         self.critic_target.train()
@@ -160,6 +185,7 @@ class DrQV2Agent:
         self.encoder.train(training)
         self.actor.train(training)
         self.critic.train(training)
+        self.decoder.train(training)
 
     def act(self, obs, step, eval_mode):
         obs = torch.as_tensor(obs, device=self.device)
@@ -227,6 +253,26 @@ class DrQV2Agent:
 
         return metrics
 
+    def update_decoder(self, obs, step):
+        metrics = dict()
+
+        h = self.encoder(obs)
+        h_rev = self.decoder(h)
+
+        loss = F.mse_loss(h,hrev) + 10e-6 * latent_loss = (0.5 * h.pow(2).sum(1)).mean()
+        self.encoder_opt.zero_grad()
+        self.decoder_opt.zero_grad()
+        loss.backward()
+
+        self.encoder_opt.step()
+        self.decoder_opt.step()
+
+        if self.use_tb:
+            metrics['reconst_loss'] = loss.item()
+
+        return metrics
+
+
     def update(self, replay_iter, step):
         metrics = dict()
 
@@ -238,8 +284,10 @@ class DrQV2Agent:
             batch, self.device)
 
         # augment
-        # obs = self.aug(obs.float())
-        # next_obs = self.aug(next_obs.float())
+        if AUG:
+            obs = self.aug(obs.float())
+            next_obs = self.aug(next_obs.float())
+
         # encode
         obs = self.encoder(obs)
         with torch.no_grad():
@@ -258,5 +306,10 @@ class DrQV2Agent:
         # update critic target
         utils.soft_update_params(self.critic, self.critic_target,
                                  self.critic_target_tau)
+
+        # update decoder
+        if DEC:
+            metrics.update(
+                self.update_decoder(obs,step))
 
         return metrics
