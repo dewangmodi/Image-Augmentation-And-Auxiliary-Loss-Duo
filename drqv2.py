@@ -12,7 +12,7 @@ import utils
 
 
 AUG = True
-DEC = False
+DEC = True
 
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
@@ -261,8 +261,8 @@ class DrQV2Agent:
 
         h = self.encoder(obs)
         h_rev = self.decoder(h)
-
-        loss = F.mse_loss(h,hrev) + 10e-6 * latent_loss = (0.5 * h.pow(2).sum(1)).mean()
+        latent_loss = (0.5 * h.pow(2).sum(1)).mean()
+        loss = F.mse_loss(h,hrev) + 10e-6 * latent_loss
         self.encoder_opt.zero_grad()
         self.decoder_opt.zero_grad()
         loss.backward()
