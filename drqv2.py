@@ -258,12 +258,13 @@ class DrQV2Agent:
 
     def update_decoder(self, obs, step):
         metrics = dict()
-
         h = self.encoder(obs)
         h_rev = self.decoder(h)
         latent_loss = (0.5 * h.pow(2).sum(1)).mean()
         loss = F.mse_loss(obs,h_rev) + 1e-6 * latent_loss
-        print("HERERER : ",loss,type(loss),latent_loss,type(latent_loss),F.mse_loss(obs,h_rev),type(F.mse_loss(obs,h_rev)))
+        # print("HErerere",type(obs),obs.dtype,type(h_rev),h_rev.dtype)
+        # print("HERERE",obs,h_rev)
+        # print("HERERER : ",loss,type(loss),latent_loss,type(latent_loss),F.mse_loss(obs,h_rev),type(F.mse_loss(obs,h_rev)))
         self.encoder_opt.zero_grad()
         self.decoder_opt.zero_grad()
         loss.backward()
