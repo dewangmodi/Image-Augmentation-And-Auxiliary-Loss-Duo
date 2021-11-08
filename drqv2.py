@@ -292,6 +292,10 @@ class DrQV2Agent:
         ### uncomment 
         # obs = self.aug(obs.float())
         # next_obs = self.aug(next_obs.float())
+        obs = obs.float()
+        next_obs = next_obs.float()
+
+
 
         # encode
         obs_transformed = self.encoder(obs)
