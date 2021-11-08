@@ -11,9 +11,6 @@ import torch.nn.functional as F
 import utils
 
 
-AUG = False
-DEC = True
-
 class RandomShiftsAug(nn.Module):
     def __init__(self, pad):
         super().__init__()
@@ -158,8 +155,9 @@ class DrQV2Agent:
 
         # models
         self.encoder = Encoder(obs_shape).to(device)
-        if DEC:
-            self.decoder = Decoder(obs_shape).to(device)
+        
+        ## uncomment
+        self.decoder = Decoder(obs_shape).to(device)
         self.actor = Actor(self.encoder.repr_dim, action_shape, feature_dim,
                            hidden_dim).to(device)
 
@@ -173,8 +171,9 @@ class DrQV2Agent:
         self.encoder_opt = torch.optim.Adam(self.encoder.parameters(), lr=lr)
         self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=lr)
         self.critic_opt = torch.optim.Adam(self.critic.parameters(), lr=lr)
-        if DEC:
-            self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=lr)
+
+        ## uncomment
+        self.decoder_opt = torch.optim.Adam(self.decoder.parameters(), lr=lr)
 
         # data augmentation
         self.aug = RandomShiftsAug(pad=4)
@@ -187,8 +186,9 @@ class DrQV2Agent:
         self.encoder.train(training)
         self.actor.train(training)
         self.critic.train(training)
-        if DEC:
-            self.decoder.train(training)
+
+        ## uncomment
+        self.decoder.train(training)
 
     def act(self, obs, step, eval_mode):
         obs = torch.as_tensor(obs, device=self.device)
@@ -262,7 +262,8 @@ class DrQV2Agent:
         h = self.encoder(obs)
         h_rev = self.decoder(h)
         latent_loss = (0.5 * h.pow(2).sum(1)).mean()
-        loss = F.mse_loss(obs,h_rev) + 10e-6 * latent_loss
+        loss = F.mse_loss(obs,h_rev) + 1e-6 * latent_loss
+        print("HERERER : ",loss,type(loss),latent_loss,type(latent_loss),F.mse_loss(obs,h_rev),type(F.mse_loss(obs,h_rev)))
         self.encoder_opt.zero_grad()
         self.decoder_opt.zero_grad()
         loss.backward()
@@ -287,9 +288,9 @@ class DrQV2Agent:
             batch, self.device)
 
         # augment
-        if AUG:
-            obs = self.aug(obs.float())
-            next_obs = self.aug(next_obs.float())
+        ### uncomment 
+        obs = self.aug(obs.float())
+        next_obs = self.aug(next_obs.float())
 
         # encode
         obs_transformed = self.encoder(obs)
@@ -311,8 +312,8 @@ class DrQV2Agent:
                                  self.critic_target_tau)
 
         # update decoder
-        if DEC:
-            metrics.update(
-                self.update_decoder(obs,step))
+        ## uncomment
+        metrics.update(
+            self.update_decoder(obs,step))
 
         return metrics
